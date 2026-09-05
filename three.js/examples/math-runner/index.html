@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Parkour Runner 3D - Petualangan Matematika Tiga Dimensi</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Three.js Import Map -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../build/three.module.js"
+        }
+    }
+    </script>
+</head>
+<body>
+    <!-- Three.js Canvas Container -->
+    <div id="game-container"></div>
+
+    <!-- Screen Flash Overlay -->
+    <div id="flash-overlay"></div>
+
+    <!-- HUD (Heads Up Display) -->
+    <div class="hud-layer">
+        <!-- Top Header -->
+        <div class="hud-header">
+            <!-- Sisi Kiri: Badge Jenjang, Level & Nyawa -->
+            <div class="hud-left">
+                <div id="hud-badge" class="hud-badge">SD • LEVEL 1 • SOAL 1/10</div>
+                <div id="hud-lives" class="hud-lives">❤️❤️❤️</div>
+            </div>
+
+            <!-- Tengah: Banner Soal Matematika Aktif -->
+            <div class="hud-question-container">
+                <div class="question-label">GERBANG JAWABAN BERIKUTNYA</div>
+                <div id="hud-question" class="question-text">7 + 8 = ?</div>
+            </div>
+
+            <!-- Sisi Kanan: Skor, Target Nilai, Koin & Tombol Aksi -->
+            <div class="hud-right">
+                <div class="hud-coins-box" id="hud-coins-box" title="Saldo Koin Anda">
+                    <span class="coin-icon">🪙</span>
+                    <span id="hud-coins" class="coin-amount">500</span>
+                </div>
+                <div class="score-box">
+                    <div id="hud-score" class="score-val">0</div>
+                    <div class="target-val">TARGET: <span id="hud-target">3.000</span></div>
+                    <div class="target-progress-wrapper">
+                        <div id="hud-target-bar" class="target-progress-bar"></div>
+                    </div>
+                </div>
+                <div class="hud-actions">
+                    <button id="btn-open-shop-hud" class="btn-icon" title="Toko & Kustomisasi Skin">🛍️</button>
+                    <button id="btn-open-leaderboard-hud" class="btn-icon" title="Papan Peringkat">🏆</button>
+                    <button id="btn-mute" class="btn-icon" title="Suara">🔊</button>
+                    <button id="btn-pause" class="btn-icon" title="Jeda">⏸️</button>
+                    <a href="../index.html" class="btn-icon" title="Kembali ke Hub Game">🏠</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Power-Up Action Bar (Bisa diklik atau tekan 1, 2, 3, 4) -->
+        <div class="hud-powerups-bar">
+            <button id="hud-btn-shield" class="hud-powerup-btn" title="Gunakan Energy Shield (Tekan 1)">
+                <span class="p-icon">🛡️</span>
+                <span class="p-stock" id="stock-shield">0</span>
+                <span class="p-key">[1]</span>
+            </button>
+            <button id="hud-btn-heart" class="hud-powerup-btn" title="Gunakan Pemulih Nyawa (Tekan 2)">
+                <span class="p-icon">❤️</span>
+                <span class="p-stock" id="stock-heart">0</span>
+                <span class="p-key">[2]</span>
+            </button>
+            <button id="hud-btn-magnet" class="hud-powerup-btn" title="Gunakan Magnet Koin (Tekan 3)">
+                <span class="p-icon">🧲</span>
+                <span class="p-stock" id="stock-magnet">0</span>
+                <span class="p-key">[3]</span>
+            </button>
+            <button id="hud-btn-nitro" class="hud-powerup-btn" title="Gunakan Nitro Turbo (Tekan 4)">
+                <span class="p-icon">🚀</span>
+                <span class="p-stock" id="stock-nitro">0</span>
+                <span class="p-key">[4]</span>
+            </button>
+        </div>
+
+        <!-- Floating Combo Multiplier -->
+        <div id="hud-combo" class="hud-combo-badge">COMBO 1x 🔥</div>
+
+        <!-- Floating Feedback Text -->
+        <div id="hud-popup"></div>
+
+        <!-- Touch Controls untuk Layar Sentuh / Mobile -->
+        <div class="touch-controls">
+            <button id="touch-left" class="touch-btn">◀</button>
+            <button id="touch-jump" class="touch-btn touch-jump-btn">▲ LOMPAT</button>
+            <button id="touch-right" class="touch-btn">▶</button>
+        </div>
+    </div>
+
+    <!-- MODAL 1: MENU UTAMA & PEMILIH LEVEL (1 - 50) -->
+    <div id="modal-menu" class="modal-overlay">
+        <div class="modal-card">
+            <h2 class="modal-title">🏃 MATH PARKOUR RUNNER 3D</h2>
+            <p class="modal-subtitle">Pilih Jenjang Pendidikan & Level Permainan (1 - 50)</p>
+
+            <!-- Jenjang Tabs (SD, SMP, SMA) -->
+            <div class="grade-tabs">
+                <button class="grade-tab active" data-grade="sd">🎒 SD (Level 1-50)</button>
+                <button class="grade-tab" data-grade="smp">📐 SMP (Level 1-50)</button>
+                <button class="grade-tab" data-grade="sma">🎓 SMA (Level 1-50)</button>
+            </div>
+
+            <!-- Grid 50 Level -->
+            <div id="level-grid" class="level-grid">
+                <!-- Diisi secara dinamis oleh runner-game.js -->
+            </div>
+
+            <div class="modal-actions">
+                <button id="btn-open-shop-menu" class="btn-action btn-gold">
+                    <span>🛍️ TOKO & SKIN PEMAIN</span>
+                </button>
+                <button id="btn-open-leaderboard-menu" class="btn-action btn-cyan">
+                    <span>🏆 PAPAN PERINGKAT PEMAIN</span>
+                </button>
+                <a href="../index.html" class="btn-action btn-dark">
+                    <span>🏠 KEMBALI KE HUB GAME</span>
+                </a>
+            </div>
+
+            <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 16px; text-align: center;">
+                Didesain & Dibuat oleh: <strong style="color: #00f0ff;">Wuntat Widiyono</strong> • Three.js 3D Runner
+            </p>
+        </div>
+    </div>
+
+    <!-- MODAL 2: PAUSE / JEDA -->
+    <div id="modal-pause" class="modal-overlay hidden">
+        <div class="modal-card" style="max-width: 450px;">
+            <h2 class="modal-title">⏸️ PERMAINAN DIJEDA</h2>
+            <p class="modal-subtitle">Gunakan A / D / Panah untuk bermanuver dan Spasi untuk melompat.</p>
+            <div class="modal-actions" style="flex-direction: column; width: 100%;">
+                <button id="btn-resume" class="btn-action btn-cyan">▶️ LANJUTKAN</button>
+                <button id="btn-open-shop-pause" class="btn-action btn-gold">🛍️ TOKO POWER-UP & SKIN</button>
+                <button id="btn-open-leaderboard-pause" class="btn-action btn-dark">🏆 PAPAN PERINGKAT</button>
+                <button id="btn-restart-pause" class="btn-action btn-dark">🔄 ULANGI LEVEL INI</button>
+                <button id="btn-menu-pause" class="btn-action btn-dark">📋 PILIH LEVEL LAIN</button>
+                <a href="../index.html" class="btn-action btn-dark">🏠 KEMBALI KE HUB</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: HASIL LEVEL (SELESAI / GAGAL) -->
+    <div id="modal-result" class="modal-overlay hidden">
+        <div class="modal-card" style="max-width: 520px;">
+            <h2 id="result-title" class="modal-title">🎉 LEVEL SELESAI!</h2>
+            <p id="result-desc" class="modal-subtitle">Hasil pencapaian target nilai kelulusan Anda:</p>
+
+            <div class="result-stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">SKOR ANDA</div>
+                    <div id="result-score" class="stat-val">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">TARGET NILAI</div>
+                    <div id="result-target" class="stat-val">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">BINTANG</div>
+                    <div id="result-stars" class="stat-val">⭐⭐⭐</div>
+                </div>
+            </div>
+
+            <!-- Input Rekor Pemain ke Papan Peringkat -->
+            <div id="save-score-section" style="background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 14px; padding: 14px; margin-bottom: 20px;">
+                <div style="font-size: 0.85rem; font-weight: 700; color: #00f0ff; margin-bottom: 8px;">🏆 CATATKAN NAMA ANDA DI PAPAN PERINGKAT:</div>
+                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                    <input type="text" id="player-name-input" placeholder="Nama Anda..." maxlength="20" style="background: rgba(7, 12, 28, 0.9); border: 1px solid rgba(0, 240, 255, 0.5); color: #fff; padding: 10px 14px; border-radius: 10px; font-size: 0.95rem; outline: none; width: 60%; min-width: 180px;">
+                    <button id="btn-save-score" class="btn-action btn-cyan" style="padding: 10px 18px;">💾 SIMPAN</button>
+                </div>
+                <div id="save-score-msg" style="font-size: 0.82rem; margin-top: 6px; font-weight: 700;"></div>
+            </div>
+
+            <div class="modal-actions">
+                <button id="btn-next-level" class="btn-action btn-cyan">▶️ LEVEL BERIKUTNYA</button>
+                <button id="btn-retry" class="btn-action btn-dark">🔄 MAIN LAGI</button>
+                <button id="btn-menu-result" class="btn-action btn-dark">📋 PILIH LEVEL LAIN</button>
+                <a href="../index.html" class="btn-action btn-dark">🏠 KEMBALI KE HUB</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: PAPAN PERINGKAT (LEADERBOARD) -->
+    <div id="modal-leaderboard" class="modal-overlay hidden">
+        <div class="modal-card" style="max-width: 580px;">
+            <h2 class="modal-title">🏆 PAPAN PERINGKAT (MATH RUNNER)</h2>
+            <p class="modal-subtitle">Daftar Top 10 Pemain Terbaik</p>
+
+            <div class="grade-tabs" style="margin-bottom: 15px;">
+                <button class="grade-tab lb-filter active" data-lb-grade="all">Semua</button>
+                <button class="grade-tab lb-filter" data-lb-grade="sd">SD</button>
+                <button class="grade-tab lb-filter" data-lb-grade="smp">SMP</button>
+                <button class="grade-tab lb-filter" data-lb-grade="sma">SMA</button>
+            </div>
+
+            <div style="overflow-y: auto; max-height: 320px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; background: rgba(10, 16, 34, 0.6);">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+                    <thead>
+                        <tr style="background: rgba(255,255,255,0.06); color: #cbd5e1; border-bottom: 1px solid rgba(255,255,255,0.12);">
+                            <th style="padding: 10px 12px; text-align: center;">#</th>
+                            <th style="padding: 10px 12px;">Nama Pemain</th>
+                            <th style="padding: 10px 12px;">Tingkat</th>
+                            <th style="padding: 10px 12px; text-align: right;">Skor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="runner-lb-tbody">
+                        <!-- Diisi secara dinamis -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-actions">
+                <button id="btn-close-leaderboard" class="btn-action btn-dark">TUTUP</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: TOKO POWER-UP & KUSTOMISASI SKIN -->
+    <div id="modal-shop" class="modal-overlay hidden">
+        <div class="modal-card" style="max-width: 650px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h2 class="modal-title" style="margin: 0;">🛍️ TOKO & KUSTOMISASI</h2>
+                <div style="background: rgba(255, 210, 0, 0.15); border: 1px solid #ffd200; border-radius: 20px; padding: 6px 16px; font-weight: 900; color: #ffd200; font-size: 1.1rem; display: flex; align-items: center; gap: 6px;">
+                    <span>🪙</span>
+                    <span id="shop-coins-display">500</span>
+                </div>
+            </div>
+            <p class="modal-subtitle">Gunakan koin hasil lari dan menjawab soal untuk membeli perlengkapan atau skin baru!</p>
+
+            <!-- Tabs Kategori Toko -->
+            <div class="grade-tabs" style="margin-bottom: 16px;">
+                <button class="grade-tab shop-tab active" data-shop-tab="powerups">⚡ Perlengkapan Power-Up</button>
+                <button class="grade-tab shop-tab" data-shop-tab="skins">🎨 Skin & Armor Karakter</button>
+            </div>
+
+            <!-- List Item Power-Up -->
+            <div id="shop-tab-powerups" class="shop-grid">
+                <!-- Diisi secara dinamis -->
+            </div>
+
+            <!-- List Item Skin Karakter -->
+            <div id="shop-tab-skins" class="shop-grid" style="display: none;">
+                <!-- Diisi secara dinamis -->
+            </div>
+
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button id="btn-close-shop" class="btn-action btn-cyan">SELESAI / TUTUP</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Scripts -->
+    <script type="module" src="js/runner-game.js"></script>
+</body>
+</html>

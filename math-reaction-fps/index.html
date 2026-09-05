@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Reaction FPS - Tembak Reaksi Matematika 3D</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Import map Three.js lokal yang terhubung langsung dengan server Three.js -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../three.js/build/three.module.js",
+            "three/addons/": "../three.js/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <!-- Container Canvas Three.js -->
+    <div id="game-container"></div>
+
+    <!-- Layar Flash Merah saat salah -->
+    <div id="flash-overlay"></div>
+
+    <!-- Sniper Scope Overlay saat Klik Kanan Zoom -->
+    <div id="sniper-scope-overlay" class="hidden">
+        <div class="scope-vignette"></div>
+        <div class="scope-reticle">
+            <div class="reticle-line-h"></div>
+            <div class="reticle-line-v"></div>
+            <div class="reticle-center"></div>
+        </div>
+    </div>
+
+    <!-- Crosshair & Hitmarker di Tengah Layar -->
+    <div class="crosshair-container">
+        <div class="crosshair-dot"></div>
+        <div class="crosshair-line top"></div>
+        <div class="crosshair-line bottom"></div>
+        <div class="crosshair-line left"></div>
+        <div class="crosshair-line right"></div>
+        <div id="hitmarker"></div>
+    </div>
+
+    <!-- Teks Hitungan Mundur (3, 2, 1, TEMBAK!) -->
+    <div id="countdown-display" class="hidden">3</div>
+
+    <!-- Feedback Waktu Reaksi Pop-up -->
+    <div id="reaction-popup">⚡ 650 ms</div>
+
+    <!-- Notifikasi Ganti Senjata Pop-up -->
+    <div id="weapon-switch-popup">SENJATA: GLOCK .40</div>
+
+    <!-- HUD In-Game -->
+    <div id="game-hud" class="hidden">
+        <!-- Tombol Jeda / Keluar di Pojok Kanan Atas HUD -->
+        <button id="btn-hud-exit" class="btn-hud-action">🚪 JEDA / KELUAR (ESC)</button>
+
+        <!-- Banner Soal di Atas -->
+        <div class="question-banner">
+            <div id="question-badge" class="question-badge">SOAL 1 / 10 (SD)</div>
+            <div id="question-text" class="question-text">8 × 7 = ?</div>
+            <div class="timer-container">
+                <div id="timer-bar-fill" class="timer-bar-fill"></div>
+            </div>
+        </div>
+
+        <!-- Bar Bawah: Skor, Combo, Target Nilai, & Info Senjata Aktif -->
+        <div class="hud-bottom-bar">
+            <div class="hud-card">
+                <div class="hud-label">SKOR TOTAL</div>
+                <div id="score-val" class="hud-val">0</div>
+            </div>
+
+            <div class="hud-card combo-card">
+                <div class="hud-label">STREAK COMBO</div>
+                <div id="combo-val" class="hud-val">0x</div>
+            </div>
+
+            <!-- Target Nilai Level Kelulusan -->
+            <div class="hud-card target-hud-card">
+                <div id="hud-target-score" class="hud-label" style="color: #ffd700; font-weight: 800;">TARGET: 3500</div>
+                <div class="target-bar-bg">
+                    <div id="hud-target-bar-fill" class="target-bar-fill"></div>
+                </div>
+            </div>
+
+            <!-- Kartu Senjata Aktif -->
+            <div class="hud-card weapon-card" id="hud-weapon-card">
+                <img id="hud-weapon-img" src="gun/Glock .40-calibre semiautomatic pistol..jpg" alt="Weapon">
+                <div class="weapon-text-info">
+                    <div id="hud-weapon-name" class="hud-val" style="font-size: 19px;">GLOCK .40</div>
+                    <div id="hud-weapon-category" class="hud-label">PISTOL • .40 S&W</div>
+                    <div class="weapon-ctrl-hint">⌨️ [1-9] Ganti Senjata | [Klik Kanan] Zoom/Scope</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MENU UTAMA -->
+    <div id="main-menu" class="screen-overlay">
+        <div class="menu-card">
+            <h1 class="game-title">🎯 MATH REACTION FPS</h1>
+            <p class="game-subtitle">Game 3D First-Person Aim Training & Tembak Reaksi Matematika</p>
+
+            <div class="instruction-box">
+                🕹️ <span>KONTROL:</span> Klik pilihan jenjang untuk mulai | <span>Arahkan kursor</span> ke target jawaban benar | <span>Klik Kiri</span> tembak | <span>Klik Kanan</span> bidik/zoom | <span>1-9</span> ganti senjata.
+            </div>
+
+            <h3 style="margin-bottom: 12px; font-size: 15px; color: #00e5ff; letter-spacing: 2px;">PILIH TINGKAT PENDIDIKAN:</h3>
+
+            <div class="grade-selection">
+                <!-- SD -->
+                <div class="grade-btn" data-grade="sd">
+                    <div class="grade-level">JENJANG SD</div>
+                    <div class="grade-title">Sekolah Dasar</div>
+                    <div class="grade-desc">Penjumlahan, Pengurangan, Perkalian & Pembagian dasar 1-100. Waktu reaksi: 10 detik/soal.</div>
+                </div>
+
+                <!-- SMP -->
+                <div class="grade-btn" data-grade="smp">
+                    <div class="grade-level">JENJANG SMP</div>
+                    <div class="grade-title">Menengah Pertama</div>
+                    <div class="grade-desc">Operasi Bilangan Negatif, Persamaan Linear ax + b = c, Akar & Persentase. Waktu reaksi: 9 detik/soal.</div>
+                </div>
+
+                <!-- SMA -->
+                <div class="grade-btn" data-grade="sma">
+                    <div class="grade-level">JENJANG SMA</div>
+                    <div class="grade-title">Menengah Atas</div>
+                    <div class="grade-desc">Trigonometri Sudut Istimewa, Logaritma, Persamaan Kuadrat & Deret. Waktu reaksi: 8 detik/soal.</div>
+                </div>
+            </div>
+
+            <!-- Pilihan Arena / Latar Belakang -->
+            <h3 style="margin-top: 18px; margin-bottom: 10px; font-size: 15px; color: #00e5ff; letter-spacing: 2px;">🌍 PILIH LATAR / ARENA TEMBAK:</h3>
+            <div class="env-selection" id="env-selection">
+                <!-- Kota -->
+                <div class="env-btn active-env" data-env="kota">
+                    <img src="background/kota.jpg" alt="Kota" class="env-thumb">
+                    <div class="env-text-wrap">
+                        <div class="env-title">🏙️ Kota Metropolitan</div>
+                        <div class="env-desc">Gedung bertingkat modern & aspal kota</div>
+                    </div>
+                </div>
+                <!-- Padang Pasir -->
+                <div class="env-btn" data-env="padangpasir">
+                    <img src="background/padangpasir1.jpg" alt="Padang Pasir" class="env-thumb">
+                    <div class="env-text-wrap">
+                        <div class="env-title">🏜️ Padang Pasir (Desert)</div>
+                        <div class="env-desc">Gurun keemasan & cahaya matahari hangat</div>
+                    </div>
+                </div>
+                <!-- Padang Rumput -->
+                <div class="env-btn" data-env="padangrumput">
+                    <img src="background/padangrumput.jpg" alt="Padang Rumput" class="env-thumb">
+                    <div class="env-text-wrap">
+                        <div class="env-title">🌿 Padang Rumput (Meadow)</div>
+                        <div class="env-desc">Perbukitan rumput hijau asri & segar</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tombol Buka Gudang Senjata, Hub, & Keluar Game -->
+            <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                <button id="btn-open-fps-leaderboard" class="btn-primary" style="background: linear-gradient(135deg, #d97706, #b45309);">
+                    🏆 PAPAN PERINGKAT
+                </button>
+                <a href="../index.html" class="btn-primary" style="background: linear-gradient(135deg, #059669, #10b981); text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+                    🏠 HUB MENU
+                </a>
+                <button id="btn-open-armory" class="btn-primary" style="background: linear-gradient(135deg, #0284c7, #0369a1);">
+                    🎒 GUDANG SENJATA (9 PILIHAN)
+                </button>
+                <button id="btn-main-exit" class="btn-danger">
+                    🚪 KELUAR DARI GAME
+                </button>
+            </div>
+
+            <p style="font-size: 12px; color: #94a3b8; margin-top: 15px;">Didesain & Dibuat oleh: <strong style="color: #00e5ff;">Wuntat Widiyono</strong> • Berbasis Three.js & Web Audio API</p>
+        </div>
+    </div>
+
+    <!-- MODAL PILIH LEVEL (LEVEL SELECTOR 1 - 50) -->
+    <div id="level-modal" class="screen-overlay hidden">
+        <div class="menu-card level-modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div>
+                    <h2 id="level-modal-title" style="font-size: 26px; color: #00e5ff; margin-bottom: 3px;">🎯 PILIH LEVEL (1 - 50)</h2>
+                    <p id="level-modal-subtitle" style="color: #94a3b8; font-size: 13px;">Jenjang Sekolah Dasar • Selesaikan level untuk membuka level berikutnya!</p>
+                </div>
+                <button id="btn-close-level-modal" class="btn-secondary">✖ TUTUP</button>
+            </div>
+
+            <!-- Tab Jenjang SD, SMP, SMA di dalam Modal Level -->
+            <div class="level-grade-tabs">
+                <button class="level-tab-btn active-tab" data-tab-grade="sd">JENJANG SD (50 LVL)</button>
+                <button class="level-tab-btn" data-tab-grade="smp">JENJANG SMP (50 LVL)</button>
+                <button class="level-tab-btn" data-tab-grade="sma">JENJANG SMA (50 LVL)</button>
+            </div>
+
+            <!-- Level Legend & Info -->
+            <div class="level-legend-bar">
+                <span>🟢 Terbuka (Unlocked)</span>
+                <span>⭐ Bintang Kelulusan</span>
+                <span>🔒 Terkunci (Capai target skor level sebelumnya)</span>
+            </div>
+
+            <!-- Grid 50 Level -->
+            <div id="levels-grid" class="levels-grid-container"></div>
+        </div>
+    </div>
+
+    <!-- MODAL GUDANG SENJATA (ARMORY) -->
+    <div id="armory-modal" class="screen-overlay hidden">
+        <div class="menu-card armory-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="font-size: 26px; color: #00e5ff;">🎒 GUDANG SENJATA (ARMORY)</h2>
+                <button id="btn-close-armory" class="btn-secondary">✖ TUTUP</button>
+            </div>
+
+            <p style="color: #94a3b8; font-size: 13px; margin-bottom: 20px;">
+                Pilih senjata tempur Anda. Setiap senjata memiliki bentuk 3D, suara tembakan, kecepatan lontar, dan tingkat hentakan (recoil) yang berbeda!
+            </p>
+
+            <!-- Grid 9 Senjata -->
+            <div class="weapons-grid" id="weapons-grid"></div>
+        </div>
+    </div>
+
+    <!-- LAYAR PAUSE & JEDA -->
+    <div id="pause-overlay" class="screen-overlay hidden">
+        <div class="menu-card" style="max-width: 480px;">
+            <h2 style="font-size: 26px; margin-bottom: 12px; color: #ffd700;">⏸️ PERMAINAN DIJEDA</h2>
+            <p style="color: #94a3b8; margin-bottom: 24px; font-size: 13px;">Kursor mouse dilepaskan. Silakan pilih aksi di bawah:</p>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button id="btn-resume" class="btn-primary" style="padding: 13px;">▶️ LANJUTKAN BERMAIN</button>
+                <button id="btn-restart" class="btn-secondary" style="padding: 12px; margin: 0; background: rgba(0, 229, 255, 0.2); border-color: #00e5ff;">🔄 ULANGI RONDE INI</button>
+                <button id="btn-quit" class="btn-danger" style="padding: 12px;">🚪 KELUAR KE MENU UTAMA</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LAYAR HASIL AKHIR -->
+    <div id="result-screen" class="screen-overlay hidden">
+        <div class="menu-card" style="max-width: 550px;">
+            <h2 style="font-size: 26px; color: #00e5ff; margin-bottom: 10px;">🏆 RONDE SELESAI</h2>
+            
+            <div id="res-rank" class="rank-badge">S</div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="hud-label">SKOR TOTAL</div>
+                    <div id="res-score" class="stat-val">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="hud-label">RATA-RATA REAKSI</div>
+                    <div id="res-reaction" class="stat-val">0 ms</div>
+                </div>
+                <div class="stat-item">
+                    <div class="hud-label">AKURASI TEMBAK</div>
+                    <div id="res-accuracy" class="stat-val">0%</div>
+                </div>
+                <div class="stat-item">
+                    <div class="hud-label">MAX COMBO</div>
+                    <div id="res-maxcombo" class="stat-val">0x</div>
+                </div>
+            </div>
+
+            <!-- Status Kelulusan Level & Target Skor -->
+            <div id="res-level-status" style="margin: 15px 0 10px 0; padding: 12px 16px; background: rgba(15, 23, 42, 0.75); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1);">
+            </div>
+
+            <!-- Input Rekor Pemain ke Papan Peringkat -->
+            <div id="fps-save-score-section" style="background: rgba(0, 229, 255, 0.08); border: 1px solid rgba(0, 229, 255, 0.3); border-radius: 10px; padding: 12px; margin: 12px 0;">
+                <div style="font-size: 13px; font-weight: 700; color: #00e5ff; margin-bottom: 6px;">🏆 CATATKAN NAMA ANDA DI PAPAN PERINGKAT:</div>
+                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                    <input type="text" id="fps-player-name-input" placeholder="Nama Anda..." maxlength="20" style="background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0, 229, 255, 0.5); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 14px; outline: none; width: 60%; min-width: 170px;">
+                    <button id="btn-fps-save-score" class="btn-primary" style="padding: 8px 16px; margin: 0; background: linear-gradient(135deg, #00e5ff, #0284c7);">💾 SIMPAN</button>
+                </div>
+                <div id="fps-save-score-msg" style="font-size: 12px; margin-top: 5px; font-weight: 700;"></div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                <button id="btn-next-level" class="btn-primary hidden" style="background: linear-gradient(135deg, #00ff88, #059669); font-size: 16px; padding: 14px 28px;">
+                    ▶️ LANJUT KE LEVEL BERIKUTNYA
+                </button>
+                <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+                    <button id="btn-play-again" class="btn-secondary" style="margin: 0; padding: 12px 20px;">🔄 ULANGI LEVEL INI</button>
+                    <button id="btn-res-level-select" class="btn-secondary" style="margin: 0; padding: 12px 20px; background: rgba(0, 229, 255, 0.15); border-color: #00e5ff;">📋 PILIH LEVEL</button>
+                    <button id="btn-res-quit" class="btn-danger" style="margin: 0; padding: 12px 20px;">🚪 MENU UTAMA</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PAPAN PERINGKAT (LEADERBOARD GAME 1) -->
+    <div id="fps-leaderboard-modal" class="screen-overlay hidden">
+        <div class="menu-card" style="max-width: 600px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="font-size: 24px; color: #ffd700;">🏆 PAPAN PERINGKAT (MATH FPS)</h2>
+                <button id="btn-close-fps-leaderboard" class="btn-secondary" style="margin: 0; padding: 6px 14px;">✖ TUTUP</button>
+            </div>
+            <p style="color: #94a3b8; font-size: 13px; margin-bottom: 15px;">Daftar Top 10 Penembak Reaksi Terbaik</p>
+
+            <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap;">
+                <button class="btn-secondary fps-lb-filter active" data-fps-lb-grade="all" style="margin: 0; padding: 6px 14px; font-size: 13px;">Semua</button>
+                <button class="btn-secondary fps-lb-filter" data-fps-lb-grade="sd" style="margin: 0; padding: 6px 14px; font-size: 13px;">SD</button>
+                <button class="btn-secondary fps-lb-filter" data-fps-lb-grade="smp" style="margin: 0; padding: 6px 14px; font-size: 13px;">SMP</button>
+                <button class="btn-secondary fps-lb-filter" data-fps-lb-grade="sma" style="margin: 0; padding: 6px 14px; font-size: 13px;">SMA</button>
+            </div>
+
+            <div style="overflow-y: auto; max-height: 320px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; background: rgba(15, 23, 42, 0.7);">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+                    <thead>
+                        <tr style="background: rgba(255,255,255,0.06); color: #94a3b8; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <th style="padding: 10px; text-align: center;">#</th>
+                            <th style="padding: 10px;">Nama Pemain</th>
+                            <th style="padding: 10px;">Tingkat</th>
+                            <th style="padding: 10px; text-align: right;">Skor Rekor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fps-lb-tbody">
+                        <!-- Diisi skrip -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL KONFIRMASI KELUAR DARI GAME -->
+    <div id="exit-modal" class="screen-overlay hidden">
+        <div class="menu-card" style="max-width: 450px;">
+            <h2 style="font-size: 26px; color: #ef4444; margin-bottom: 15px;">🚪 KELUAR DARI GAME</h2>
+            <p style="color: #cbd5e1; margin-bottom: 25px; line-height: 1.6; font-size: 14px;">
+                Apakah Anda yakin ingin keluar dan menutup sesi permainan ini?
+            </p>
+            <div style="display: flex; justify-content: center; gap: 15px;">
+                <button id="btn-confirm-close" class="btn-danger">TUTUP / KELUAR</button>
+                <button id="btn-cancel-close" class="btn-secondary" style="margin: 0;">BATAL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inisialisasi Game Script & Render Armory -->
+    <script type="module">
+        import { MathReactionGame } from './js/game.js';
+        import { WEAPONS_DATABASE } from './js/weapons-data.js';
+        import { leaderboard } from './js/leaderboard.js';
+
+        let gameInstance = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            gameInstance = new MathReactionGame();
+
+            // --- PAPAN PERINGKAT / LEADERBOARD GAME 1 ---
+            const fpsLbModal = document.getElementById('fps-leaderboard-modal');
+            const fpsLbTbody = document.getElementById('fps-lb-tbody');
+
+            function renderFpsLeaderboard(grade = 'all') {
+                const scores = leaderboard.getScores('fps', grade, 10);
+                if (!fpsLbTbody) return;
+                fpsLbTbody.innerHTML = '';
+
+                if (scores.length === 0) {
+                    fpsLbTbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:18px; color:#8ea3bf;">Belum ada data rekor.</td></tr>`;
+                    return;
+                }
+
+                scores.forEach((item, idx) => {
+                    const tr = document.createElement('tr');
+                    const rank = idx + 1;
+                    const rankMedal = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : `#${rank}`));
+                    const gradeBadge = leaderboard.getGradeBadge(item.grade);
+
+                    tr.innerHTML = `
+                        <td style="padding: 8px 10px; text-align: center; font-weight: 800;">${rankMedal}</td>
+                        <td style="padding: 8px 10px; font-weight: 700; color: #fff;">${item.name}</td>
+                        <td style="padding: 8px 10px;">
+                            <span style="background: rgba(255,255,255,0.1); color: ${gradeBadge.color}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">${gradeBadge.label} Lvl ${item.level}</span>
+                        </td>
+                        <td style="padding: 8px 10px; text-align: right; color: #ffd700; font-weight: 900; font-family: monospace;">${item.score.toLocaleString('id-ID')}</td>
+                    `;
+                    fpsLbTbody.appendChild(tr);
+                });
+            }
+
+            document.getElementById('btn-open-fps-leaderboard')?.addEventListener('click', () => {
+                renderFpsLeaderboard('all');
+                fpsLbModal?.classList.remove('hidden');
+            });
+
+            document.getElementById('btn-close-fps-leaderboard')?.addEventListener('click', () => {
+                fpsLbModal?.classList.add('hidden');
+            });
+
+            document.querySelectorAll('.fps-lb-filter').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.fps-lb-filter').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const grade = btn.getAttribute('data-fps-lb-grade');
+                    renderFpsLeaderboard(grade);
+                });
+            });
+
+            // Simpan Rekor Pemain Game 1
+            document.getElementById('btn-fps-save-score')?.addEventListener('click', () => {
+                const nameInput = document.getElementById('fps-player-name-input');
+                const saveBtn = document.getElementById('btn-fps-save-score');
+                const saveMsg = document.getElementById('fps-save-score-msg');
+
+                const playerName = nameInput ? nameInput.value.trim() : '';
+                if (!playerName) {
+                    if (saveMsg) {
+                        saveMsg.style.color = '#ff3366';
+                        saveMsg.textContent = 'Silakan ketik nama Anda terlebih dahulu!';
+                    }
+                    return;
+                }
+
+                localStorage.setItem('math_player_name', playerName);
+
+                const accuracy = gameInstance.totalShots > 0
+                    ? Math.round((gameInstance.correctHits / gameInstance.totalShots) * 100)
+                    : 0;
+
+                const res = leaderboard.addScore('fps', {
+                    name: playerName,
+                    score: gameInstance.score,
+                    grade: gameInstance.selectedGrade,
+                    level: gameInstance.currentLevel,
+                    extra: `${accuracy}% Akurasi`
+                });
+
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.textContent = '✅ TERSIMPAN';
+                }
+                if (nameInput) nameInput.disabled = true;
+                if (saveMsg) {
+                    saveMsg.style.color = '#00ff88';
+                    saveMsg.textContent = `Rekor berhasil dicatat di Peringkat #${res.rank} Papan Peringkat!`;
+                }
+            });
+
+            // Modal Pilih Level (1 - 50)
+            const levelModal = document.getElementById('level-modal');
+            let activeModalGrade = 'sd';
+
+            function openLevelModal(grade) {
+                activeModalGrade = grade.toLowerCase();
+                updateLevelModalHeader();
+                renderLevelsGrid();
+                levelModal.classList.remove('hidden');
+            }
+
+            function updateLevelModalHeader() {
+                const titleEl = document.getElementById('level-modal-title');
+                const subEl = document.getElementById('level-modal-subtitle');
+                const gradeNames = {
+                    sd: 'Jenjang SD (Sekolah Dasar)',
+                    smp: 'Jenjang SMP (Menengah Pertama)',
+                    sma: 'Jenjang SMA (Menengah Atas)'
+                };
+                if (titleEl) titleEl.innerText = `🎯 PILIH LEVEL (1 - 50) • ${gradeNames[activeModalGrade] || ''}`;
+                if (subEl) subEl.innerText = `Capai target nilai kelulusan pada tiap level untuk membuka level berikutnya!`;
+
+                // Update active tab styling
+                document.querySelectorAll('.level-tab-btn').forEach(tb => {
+                    if (tb.getAttribute('data-tab-grade') === activeModalGrade) {
+                        tb.classList.add('active-tab');
+                    } else {
+                        tb.classList.remove('active-tab');
+                    }
+                });
+            }
+
+            function renderLevelsGrid() {
+                const grid = document.getElementById('levels-grid');
+                if (!grid) return;
+                grid.innerHTML = '';
+
+                const levels = gameInstance.levelMgr.getGradeLevelsData(activeModalGrade);
+
+                levels.forEach(lvlData => {
+                    const card = document.createElement('div');
+                    let statusClass = 'level-locked';
+                    if (lvlData.isUnlocked) {
+                        statusClass = lvlData.isCurrent ? 'level-current' : 'level-unlocked';
+                    }
+                    card.className = `level-card ${statusClass}`;
+
+                    const starStr = lvlData.stars > 0 ? '⭐'.repeat(lvlData.stars) : '';
+                    card.innerHTML = `
+                        <div class="level-card-num">${lvlData.isUnlocked ? lvlData.level : '🔒'}</div>
+                        <div class="level-card-target">Target: ${lvlData.targetScore}</div>
+                        ${lvlData.highScore > 0 ? `<div class="level-card-high">Rekor: ${lvlData.highScore}</div>` : ''}
+                        ${starStr ? `<div class="level-card-stars">${starStr}</div>` : ''}
+                    `;
+
+                    if (lvlData.isUnlocked) {
+                        card.addEventListener('click', () => {
+                            levelModal.classList.add('hidden');
+                            gameInstance.startGame(activeModalGrade, lvlData.level);
+                        });
+                    }
+
+                    grid.appendChild(card);
+                });
+            }
+
+            // Tab klik di Modal Level
+            document.querySelectorAll('.level-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeModalGrade = btn.getAttribute('data-tab-grade');
+                    updateLevelModalHeader();
+                    renderLevelsGrid();
+                });
+            });
+
+            // Tutup Modal Level
+            document.getElementById('btn-close-level-modal').addEventListener('click', () => {
+                levelModal.classList.add('hidden');
+            });
+
+            // Handle klik tombol pilihan jenjang di Menu Utama -> Buka Modal Level 1 - 50
+            document.querySelectorAll('.grade-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const grade = btn.getAttribute('data-grade');
+                    openLevelModal(grade);
+                });
+            });
+
+            // Handle tombol Lanjut ke Level Berikutnya di Result Screen
+            const btnNextLvl = document.getElementById('btn-next-level');
+            if (btnNextLvl) {
+                btnNextLvl.addEventListener('click', () => {
+                    if (gameInstance.currentLevel < 50) {
+                        gameInstance.startGame(gameInstance.selectedGrade, gameInstance.currentLevel + 1);
+                    }
+                });
+            }
+
+            // Handle tombol Ulangi Level di Result Screen
+            document.getElementById('btn-play-again').addEventListener('click', () => {
+                gameInstance.startGame(gameInstance.selectedGrade, gameInstance.currentLevel);
+            });
+
+            // Handle tombol Pilih Level di Result Screen
+            const btnResLvlSelect = document.getElementById('btn-res-level-select');
+            if (btnResLvlSelect) {
+                btnResLvlSelect.addEventListener('click', () => {
+                    document.getElementById('result-screen').classList.add('hidden');
+                    openLevelModal(gameInstance.selectedGrade);
+                });
+            }
+
+            // Handle tombol jeda/keluar di HUD
+            const btnHudExit = document.getElementById('btn-hud-exit');
+            if (btnHudExit) {
+                btnHudExit.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    gameInstance.controls.unlock();
+                });
+            }
+
+            // Handle tombol ulangi ronde di layar jeda
+            const btnRestart = document.getElementById('btn-restart');
+            if (btnRestart) {
+                btnRestart.addEventListener('click', () => {
+                    document.getElementById('pause-overlay').classList.add('hidden');
+                    gameInstance.startGame(gameInstance.selectedGrade, gameInstance.currentLevel);
+                });
+            }
+
+            // Handle tombol keluar di layar hasil akhir
+            const btnResQuit = document.getElementById('btn-res-quit');
+            if (btnResQuit) {
+                btnResQuit.addEventListener('click', () => {
+                    gameInstance.stopGame();
+                });
+            }
+
+            // Handle modal konfirmasi keluar dari Menu Utama
+            const exitModal = document.getElementById('exit-modal');
+            document.getElementById('btn-main-exit').addEventListener('click', () => {
+                exitModal.classList.remove('hidden');
+            });
+
+            document.getElementById('btn-cancel-close').addEventListener('click', () => {
+                exitModal.classList.add('hidden');
+            });
+
+            document.getElementById('btn-confirm-close').addEventListener('click', () => {
+                exitModal.innerHTML = `
+                    <div class="menu-card" style="max-width: 440px;">
+                        <h2 style="font-size: 24px; color: #00ff88; margin-bottom: 12px;">👋 TERIMA KASIH TELAH BERMAIN!</h2>
+                        <p style="color: #cbd5e1; font-size: 14px; margin-bottom: 20px;">Sesi permainan telah selesai. Anda dapat menutup tab atau jendela browser ini dengan aman.</p>
+                        <button onclick="window.close()" class="btn-primary">TUTUP TAB INI</button>
+                    </div>
+                `;
+                try {
+                    window.close();
+                } catch(e) {}
+            });
+
+            // Handle klik tombol pilihan arena/background
+            document.querySelectorAll('.env-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.env-btn').forEach(b => b.classList.remove('active-env'));
+                    btn.classList.add('active-env');
+                    const envId = btn.getAttribute('data-env');
+                    gameInstance.applyEnvironment(envId);
+                });
+            });
+
+            // Modal Armory Open/Close
+            const armoryModal = document.getElementById('armory-modal');
+            document.getElementById('btn-open-armory').addEventListener('click', () => {
+                armoryModal.classList.remove('hidden');
+                renderArmoryCards();
+            });
+
+            document.getElementById('btn-close-armory').addEventListener('click', () => {
+                armoryModal.classList.add('hidden');
+            });
+
+            function renderArmoryCards() {
+                const grid = document.getElementById('weapons-grid');
+                grid.innerHTML = '';
+
+                WEAPONS_DATABASE.forEach((w, idx) => {
+                    const isEquipped = gameInstance.currentWeapon.id === w.id;
+                    const card = document.createElement('div');
+                    card.className = `weapon-armory-card ${isEquipped ? 'active-weapon' : ''}`;
+
+                    card.innerHTML = `
+                        <div class="weapon-img-container">
+                            <img src="${w.image}" alt="${w.name}" class="armory-img">
+                            <span class="weapon-tag">${w.category.toUpperCase()}</span>
+                            <span class="weapon-slot-number">[${idx + 1}]</span>
+                        </div>
+                        <div class="weapon-details">
+                            <div class="weapon-title">${w.name}</div>
+                            <div class="weapon-fullname">${w.fullName}</div>
+                            <div class="weapon-specs-grid">
+                                <div class="spec-pill"><strong>Kaliber:</strong> ${w.specs.caliber}</div>
+                                <div class="spec-pill"><strong>Kapasitas:</strong> ${w.specs.capacity}</div>
+                                <div class="spec-pill"><strong>Kecepatan:</strong> ${w.specs.muzzleVelocity}</div>
+                                <div class="spec-pill"><strong>Jarak Efektif:</strong> ${w.specs.effectiveRange}</div>
+                                <div class="spec-pill"><strong>Bobot:</strong> ${w.specs.weight}</div>
+                                <div class="spec-pill"><strong>Aksi:</strong> ${w.specs.fireMode}</div>
+                            </div>
+                            <div class="weapon-desc">${w.description}</div>
+                            <button class="btn-equip ${isEquipped ? 'equipped' : ''}" data-id="${w.id}">
+                                ${isEquipped ? '✓ SEDANG DIGUNAKAN' : 'PAKAI SENJATA INI'}
+                            </button>
+                        </div>
+                    `;
+
+                    card.querySelector('.btn-equip').addEventListener('click', () => {
+                        gameInstance.equipWeapon(w.id);
+                        renderArmoryCards();
+                    });
+
+                    grid.appendChild(card);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

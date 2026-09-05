@@ -1,0 +1,24 @@
+# Exclude three.js internal git backup and bulky sample assets
+three.js/three_git_backup/
+three.js/docs/
+three.js/editor/
+three.js/manual/
+three.js/test/
+three.js/utils/
+three.js/devtools/
+three.js/files/
+three.js/tsl/
+three.js/.github/
+three.js/node_modules/
+three.js/examples/models/
+three.js/examples/textures/
+three.js/examples/screenshots/
+three.js/examples/files/
+three.js/examples/sounds/
+three.js/examples/ies/
+three.js/examples/luts/
+three.js/examples/materialx/
+node_modules/
+.DS_Store
+Thumbs.db
+
