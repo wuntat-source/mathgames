@@ -113,55 +113,44 @@ export class TargetManager {
     // Spawn 4 target di lokasi yang dinamis dan terpisah jauh
     spawnTargets(options, correctAnswer, level = 1) {
         this.clearTargets();
-        this.currentLevel = level || 1;
+        // 4 Sektor Lajur Khusus (Kiri Jauh, Kiri Tengah, Kanan Tengah, Kanan Jauh)
+        // Memastikan ke-4 target tersebar merata di garis horizontal tanpa ada yang bertumpuk atau sejajar dalam satu garis pandang
+        const sectors = [
+            { minX: -8.5, maxX: -4.5, baseZ: -12.0 }, // Sektor 1 (Kiri)
+            { minX: -3.8, maxX: -1.0, baseZ: -14.5 }, // Sektor 2 (Tengah Kiri)
+            { minX:  1.0, maxX:  3.8, baseZ: -13.0 }, // Sektor 3 (Tengah Kanan)
+            { minX:  4.5, maxX:  8.5, baseZ: -15.5 }  // Sektor 4 (Kanan)
+        ];
 
-        // Acak dari 12 pool slot posisi dan pilih 4 lokasi yang tidak saling bertumpukan
-        const shuffledSlots = [...this.spawnSlotsPool].sort(() => Math.random() - 0.5);
-        const chosenSlots = [];
+        // Acak urutan sektor untuk variasi setiap ronde
+        const shuffledSectors = [...sectors].sort(() => Math.random() - 0.5);
 
-        for (const slot of shuffledSlots) {
-            if (chosenSlots.length >= options.length) break;
-            // Pastikan jarak antar target minimal 3.2 unit agar tidak bertabrakan
-            const tooClose = chosenSlots.some(s => {
-                const dx = s.x - slot.x;
-                const dz = s.z - slot.z;
-                return Math.sqrt(dx * dx + dz * dz) < 3.2;
-            });
-            if (!tooClose) {
-                chosenSlots.push(slot);
-            }
-        }
+        // Ketinggian vertikal yang bervariasi tapi jelas (tidak saling menutupi pandangan)
+        const heights = [1.5, 2.2, 1.7, 2.4];
+        const shuffledHeights = [...heights].sort(() => Math.random() - 0.5);
 
-        // Fallback jika tidak menemukan jarak cukup
-        while (chosenSlots.length < options.length) {
-            chosenSlots.push(shuffledSlots[chosenSlots.length]);
-        }
-
-        // Tentukan variasi pola gerak sesuai level (makin tinggi level, target bergerak aktif)
-        // Level 1-5: Gerak halus statis / bobbing
-        // Level 6-20: Gerak horizontal patroli kiri-kanan
-        // Level 21-35: Gerak orbit elips & naik-turun
-        // Level 36-50: Gerak dinamis kombinasi dengan kecepatan lebih tinggi
         const movePatterns = ['strafe_horizontal', 'vertical_wave', 'circle_orbit', 'gentle_bob'];
 
         options.forEach((val, idx) => {
-            const slot = chosenSlots[idx];
-            // Tambahkan variasi offset acak
-            const posX = slot.x + (Math.random() - 0.5) * 1.0;
-            const posY = slot.y + (Math.random() - 0.5) * 0.4;
-            const posZ = slot.z + (Math.random() - 0.5) * 1.5;
+            const sec = shuffledSectors[idx % shuffledSectors.length];
+            // Hitung posisi X dan Z di dalam batas sektor masing-masing
+            const posX = sec.minX + Math.random() * (sec.maxX - sec.minX);
+            const posY = shuffledHeights[idx % shuffledHeights.length];
+            const posZ = sec.baseZ + (Math.random() - 0.5) * 2.0;
 
             // Tentukan pola gerak untuk target ini
             let pattern = 'gentle_bob';
             let speed = 1.0;
-            let range = 0.8;
+            // Batasi jarak gerak (range) maksimal 0.6 agar tidak bergerak melompat ke sektor target lain
+            let range = 0.5;
 
             if (this.currentLevel >= 6) {
-                pattern = movePatterns[idx % movePatterns.length];
-                // Kecepatan & radius gerak bertambah bertahap sesuai level
-                const lvlFactor = Math.min(2.2, 1.0 + (this.currentLevel / 45));
-                speed = (0.9 + Math.random() * 0.6) * lvlFactor;
-                range = Math.min(2.2, 0.9 + (this.currentLevel / 50) * 1.2);
+                // Di level tinggi, gunakan gerakan naik-turun atau elips kecil agar tetap di jalurnya
+                const highPatterns = ['vertical_wave', 'gentle_bob', 'circle_orbit', 'strafe_horizontal'];
+                pattern = highPatterns[idx % highPatterns.length];
+                const lvlFactor = Math.min(1.8, 1.0 + (this.currentLevel / 50));
+                speed = (0.8 + Math.random() * 0.4) * lvlFactor;
+                range = Math.min(0.75, 0.4 + (this.currentLevel / 60) * 0.35);
             }
 
             const targetObj = this.createSingleTarget(val, val === correctAnswer, posX, posY, posZ, pattern, speed, range);

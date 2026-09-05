@@ -1007,14 +1007,34 @@ body, html {
         height: 50px;
     }
 
+    .btn-hud-action {
+        top: 10px;
+        right: 10px;
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+
     .question-banner {
-        min-width: 90%;
-        padding: 8px 16px;
-        margin-top: 10px;
+        min-width: 0;
+        width: 86%;
+        max-width: 320px;
+        padding: 6px 12px;
+        margin: 45px auto 0 auto;
+    }
+
+    .question-badge {
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        margin-bottom: 2px;
     }
 
     .question-text {
-        font-size: 24px;
+        font-size: 20px;
+    }
+
+    .timer-container {
+        height: 4px;
+        margin-top: 6px;
     }
 
     .hud-bottom-bar {
