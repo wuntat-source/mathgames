@@ -964,3 +964,82 @@ body, html {
     100% { box-shadow: 0 0 6px rgba(0, 255, 136, 0.3); }
 }
 
+/* --- MOBILE RESPONSIVENESS (HP / SMARTPHONE) --- */
+@media (max-width: 768px) {
+    .menu-card {
+        padding: 20px 16px;
+        max-height: 92vh;
+        width: 96%;
+    }
+
+    .game-title {
+        font-size: 26px;
+    }
+
+    .game-subtitle {
+        font-size: 11px;
+        margin-bottom: 14px;
+    }
+
+    .grade-selection {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .grade-btn {
+        padding: 10px 14px;
+    }
+
+    .grade-title {
+        font-size: 15px;
+    }
+
+    .grade-desc {
+        font-size: 11px;
+    }
+
+    .env-selection {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .env-thumb {
+        height: 50px;
+    }
+
+    .question-banner {
+        min-width: 90%;
+        padding: 8px 16px;
+        margin-top: 10px;
+    }
+
+    .question-text {
+        font-size: 24px;
+    }
+
+    .hud-bottom-bar {
+        padding: 8px 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .hud-card {
+        padding: 6px 12px;
+    }
+
+    .hud-value {
+        font-size: 18px;
+    }
+
+    .weapons-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        max-height: 50vh;
+    }
+
+    .levels-grid-container {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+    }
+}
+

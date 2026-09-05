@@ -667,3 +667,195 @@ body, html {
     white-space: nowrap;
 }
 
+/* --- MOBILE RESPONSIVENESS (HP / SMARTPHONE) --- */
+@media (max-width: 768px) {
+    .hud-layer {
+        padding: 10px 12px;
+    }
+
+    .hud-header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas: 
+            "left right"
+            "center center";
+        gap: 8px;
+    }
+
+    .hud-left {
+        grid-area: left;
+        gap: 4px;
+    }
+
+    .hud-right {
+        grid-area: right;
+        gap: 6px;
+    }
+
+    .hud-question-container {
+        grid-area: center;
+        max-width: 100%;
+        padding: 6px 14px;
+        margin-top: 2px;
+    }
+
+    .question-label {
+        font-size: 0.65rem;
+    }
+
+    .question-text {
+        font-size: 1.4rem;
+    }
+
+    .hud-badge {
+        font-size: 0.7rem;
+        padding: 4px 10px;
+    }
+
+    .hud-lives {
+        font-size: 1.15rem;
+    }
+
+    .hud-coins-box {
+        padding: 4px 10px;
+    }
+
+    .coin-amount {
+        font-size: 0.85rem;
+    }
+
+    .score-box {
+        padding: 4px 12px;
+    }
+
+    .score-val {
+        font-size: 1.1rem;
+    }
+
+    .target-val {
+        font-size: 0.7rem;
+    }
+
+    .target-progress-wrapper {
+        width: 110px;
+        height: 6px;
+    }
+
+    .btn-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 0.95rem;
+    }
+
+    /* Floating elements */
+    .hud-combo-badge {
+        top: 155px;
+        left: 12px;
+        font-size: 0.85rem;
+        padding: 4px 10px;
+    }
+
+    /* Quick Power-Up Bar di HP diletakkan di atas tombol gerak */
+    .hud-powerups-bar {
+        bottom: 95px;
+        left: 12px;
+        gap: 6px;
+    }
+
+    .hud-powerup-btn {
+        padding: 5px 8px;
+        min-width: 44px;
+    }
+
+    .hud-powerup-btn .p-icon {
+        font-size: 1rem;
+    }
+
+    .hud-powerup-btn .p-stock {
+        font-size: 0.72rem;
+    }
+
+    .hud-powerup-btn .p-key {
+        display: none;
+    }
+
+    /* Touch Controls Mobile */
+    .touch-controls {
+        display: flex;
+        padding: 0 4px 10px 4px;
+    }
+
+    .touch-btn {
+        width: 68px;
+        height: 68px;
+        font-size: 1.3rem;
+    }
+
+    .touch-jump-btn {
+        width: 78px;
+        height: 78px;
+        font-size: 0.85rem;
+    }
+
+    /* Modal Cards di Layar HP */
+    .modal-card {
+        padding: 18px 14px;
+        max-height: 92vh;
+        border-radius: 16px;
+    }
+
+    .modal-title {
+        font-size: 1.3rem;
+    }
+
+    .modal-subtitle {
+        font-size: 0.8rem;
+        margin-bottom: 12px;
+    }
+
+    .level-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+        max-height: 250px;
+    }
+
+    .lvl-number {
+        font-size: 1rem;
+    }
+
+    .lvl-status {
+        font-size: 0.65rem;
+    }
+
+    .lvl-target {
+        font-size: 0.55rem;
+    }
+
+    .shop-grid {
+        max-height: 280px;
+    }
+
+    .shop-item-card {
+        padding: 10px 12px;
+        gap: 10px;
+    }
+
+    .shop-item-icon {
+        font-size: 1.6rem;
+        min-width: 36px;
+    }
+
+    .shop-item-name {
+        font-size: 0.9rem;
+    }
+
+    .shop-item-desc {
+        font-size: 0.72rem;
+    }
+
+    .btn-action {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+    }
+}
+
