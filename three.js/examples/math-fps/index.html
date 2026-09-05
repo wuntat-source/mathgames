@@ -10,8 +10,8 @@
     <script type="importmap">
     {
         "imports": {
-            "three": "../../build/three.module.js",
-            "three/addons/": "../jsm/"
+            "three": "../three.js/build/three.module.js",
+            "three/addons/": "../three.js/examples/jsm/"
         }
     }
     </script>
@@ -96,6 +96,14 @@
                 </div>
             </div>
         </div>
+
+        <!-- Tombol Tembak Sentuh Layar untuk Handphone / Layar Sentuh -->
+        <div class="mobile-fps-controls">
+            <button id="mobile-btn-shoot" class="mobile-shoot-btn" type="button">
+                <span>🔥</span>
+                <span>TEMBAK</span>
+            </button>
+        </div>
     </div>
 
     <!-- MENU UTAMA -->
@@ -105,7 +113,8 @@
             <p class="game-subtitle">Game 3D First-Person Aim Training & Tembak Reaksi Matematika</p>
 
             <div class="instruction-box">
-                🕹️ <span>KONTROL:</span> Klik pilihan jenjang untuk mulai | <span>Arahkan kursor</span> ke target jawaban benar | <span>Klik Kiri</span> tembak | <span>Klik Kanan</span> bidik/zoom | <span>1-9</span> ganti senjata.
+                🕹️ <span>KONTROL PC:</span> Gerakkan mouse untuk membidik | <span>Klik Kiri</span> tembak | <span>Klik Kanan</span> zoom | <span>1-9</span> ganti senjata.<br>
+                📱 <span>KONTROL HP:</span> Geser layar dengan jari untuk mengarahkan bidikan | Ketuk layar atau tombol merah <span>🔥 TEMBAK</span> di kanan bawah!
             </div>
 
             <h3 style="margin-bottom: 12px; font-size: 15px; color: #00e5ff; letter-spacing: 2px;">PILIH TINGKAT PENDIDIKAN:</h3>
@@ -178,7 +187,7 @@
                 </button>
             </div>
 
-            <p style="font-size: 12px; color: #64748b; margin-top: 15px;">Dibuat dengan Three.js & Web Audio API Sintetis</p>
+            <p style="font-size: 12px; color: #94a3b8; margin-top: 15px;">Didesain & Dibuat oleh: <strong style="color: #00e5ff;">Wuntat Widiyono</strong> • Berbasis Three.js & Web Audio API</p>
         </div>
     </div>
 
@@ -561,7 +570,11 @@
             if (btnHudExit) {
                 btnHudExit.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    gameInstance.controls.unlock();
+                    if (gameInstance.isTouchDevice) {
+                        document.getElementById('pause-overlay').classList.remove('hidden');
+                    } else {
+                        gameInstance.controls.unlock();
+                    }
                 });
             }
 

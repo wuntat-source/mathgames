@@ -41,6 +41,18 @@ export class MathReactionGame {
         this.isZoomed = false;
         this.defaultFOV = 75;
 
+        // Mobile Touch Control Variables
+        this.isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
+        this.touchActive = false;
+        this.touchId = null;
+        this.touchPrevX = 0;
+        this.touchPrevY = 0;
+        this.touchStartX = 0;
+        this.touchStartY = 0;
+        this.touchStartTime = 0;
+        this.touchMoved = false;
+        this.touchSensitivity = 0.0032;
+
         // Environment / Background System
         this.envList = ENVIRONMENTS_DATABASE;
         this.currentEnv = this.envList[0]; // Default: Kota
@@ -69,6 +81,7 @@ export class MathReactionGame {
         // Camera
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.set(0, 1.7, 0); // Ketinggian mata pemain (1.7m)
+        this.camera.rotation.order = 'YXZ'; // Format rotasi Euler yaw & pitch standar FPS
 
         // Renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -454,7 +467,7 @@ export class MathReactionGame {
 
         // Klik Mouse: Klik kiri menembak, Klik kanan Zoom / Scope
         window.addEventListener('mousedown', (e) => {
-            if (!this.controls.isLocked) return;
+            if (!this.controls.isLocked && !this.isTouchDevice) return;
 
             if (e.button === 0) {
                 this.shoot();
@@ -482,20 +495,129 @@ export class MathReactionGame {
             }
         });
 
-        // Pointer Lock State change
+        // ==========================================
+        // KONTROL SENTUH LAYAR (TOUCH CONTROLS SMARTPHONE)
+        // ==========================================
+        const canvasEl = this.renderer.domElement;
+
+        // Sentuhan pada layar untuk rotasi kamera / bidik
+        const handleTouchStart = (e) => {
+            // Abaikan jika menyentuh tombol UI/HUD
+            const targetEl = e.target;
+            if (targetEl.closest('button') || targetEl.closest('.hud-card') || targetEl.closest('.screen-overlay') || targetEl.closest('.mobile-shoot-btn')) {
+                return;
+            }
+
+            if (!this.isPlaying && !this.isCountingDown) return;
+
+            // Ambil touch pertama yang aktif
+            if (!this.touchActive && e.changedTouches.length > 0) {
+                const touch = e.changedTouches[0];
+                this.touchActive = true;
+                this.touchId = touch.identifier;
+                this.touchStartX = touch.clientX;
+                this.touchStartY = touch.clientY;
+                this.touchPrevX = touch.clientX;
+                this.touchPrevY = touch.clientY;
+                this.touchStartTime = performance.now();
+                this.touchMoved = false;
+            }
+        };
+
+        const handleTouchMove = (e) => {
+            if (!this.touchActive) return;
+
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                if (touch.identifier === this.touchId) {
+                    const dx = touch.clientX - this.touchPrevX;
+                    const dy = touch.clientY - this.touchPrevY;
+
+                    if (Math.abs(touch.clientX - this.touchStartX) > 4 || Math.abs(touch.clientY - this.touchStartY) > 4) {
+                        this.touchMoved = true;
+                    }
+
+                    // Putar kamera FPS (Yaw & Pitch)
+                    this.camera.rotation.y -= dx * this.touchSensitivity;
+                    this.camera.rotation.x -= dy * this.touchSensitivity;
+
+                    // Batasi sudut kemiringan vertikal (Pitch) agar tidak berputar balik
+                    const maxPitch = Math.PI / 2.6; // ~69 derajat
+                    this.camera.rotation.x = Math.max(-maxPitch, Math.min(maxPitch, this.camera.rotation.x));
+
+                    this.touchPrevX = touch.clientX;
+                    this.touchPrevY = touch.clientY;
+
+                    if (e.cancelable) {
+                        e.preventDefault();
+                    }
+                    break;
+                }
+            }
+        };
+
+        const handleTouchEnd = (e) => {
+            if (!this.touchActive) return;
+
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                if (touch.identifier === this.touchId) {
+                    const duration = performance.now() - this.touchStartTime;
+
+                    // Jika hanya berupa ketukan kilat (tap) dan tidak digeser jauh -> tembak!
+                    if (!this.touchMoved && duration < 300 && this.isPlaying) {
+                        this.shoot();
+                    }
+
+                    this.touchActive = false;
+                    this.touchId = null;
+                    break;
+                }
+            }
+        };
+
+        window.addEventListener('touchstart', handleTouchStart, { passive: false });
+        window.addEventListener('touchmove', handleTouchMove, { passive: false });
+        window.addEventListener('touchend', handleTouchEnd, { passive: false });
+        window.addEventListener('touchcancel', () => {
+            this.touchActive = false;
+            this.touchId = null;
+        });
+
+        // Tombol Tembak Sentuh khusus Smartphone
+        const mobileShootBtn = document.getElementById('mobile-btn-shoot');
+        if (mobileShootBtn) {
+            const fireMobileShot = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (this.isPlaying) {
+                    this.shoot();
+                }
+            };
+            mobileShootBtn.addEventListener('touchstart', fireMobileShot, { passive: false });
+            mobileShootBtn.addEventListener('mousedown', fireMobileShot);
+        }
+
+        // Pointer Lock State change (khusus Desktop Mouse)
         this.controls.addEventListener('lock', () => {
             document.getElementById('pause-overlay').classList.add('hidden');
         });
 
         this.controls.addEventListener('unlock', () => {
-            if (this.isPlaying) {
+            // Pada smartphone/touchscreen, unlock PointerLock sering dipicu otomatis oleh browser
+            // Jadi hanya tampilkan jeda jika BUKAN layar sentuh murni
+            if (this.isPlaying && !this.isTouchDevice) {
                 document.getElementById('pause-overlay').classList.remove('hidden');
             }
         });
 
         // Tombol Resume di Pause Screen
         document.getElementById('btn-resume').addEventListener('click', () => {
-            this.controls.lock();
+            if (!this.isTouchDevice) {
+                this.controls.lock();
+            } else {
+                document.getElementById('pause-overlay').classList.add('hidden');
+            }
         });
 
         // Tombol Quit ke Menu Utama
@@ -529,8 +651,10 @@ export class MathReactionGame {
         this.correctHits = 0;
         this.reactionTimes = [];
 
-        // Kunci kursor mouse
-        this.controls.lock();
+        // Kunci kursor mouse jika di desktop
+        try {
+            this.controls.lock();
+        } catch (e) {}
 
         // UI Transition
         document.getElementById('main-menu').classList.add('hidden');

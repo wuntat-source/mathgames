@@ -1063,3 +1063,63 @@ body, html {
     }
 }
 
+/* ==========================================================================
+   KONTROL TOUCH SCREEN & TOMBOL TEMBAK MOBILE (SMARTPHONE / TABLET)
+   ========================================================================== */
+.mobile-fps-controls {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 100;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+.mobile-shoot-btn {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    border: 3px solid rgba(255, 255, 255, 0.85);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.65), 0 6px 16px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    outline: none;
+    font-family: inherit;
+    transition: transform 0.08s ease, background 0.1s ease, box-shadow 0.1s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-shoot-btn span:first-child {
+    font-size: 26px;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.mobile-shoot-btn span:last-child {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    pointer-events: none;
+}
+
+.mobile-shoot-btn:active {
+    transform: scale(0.92);
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    box-shadow: 0 0 35px rgba(255, 50, 50, 0.9), 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+@media (max-width: 900px), (hover: none) and (pointer: coarse) {
+    .mobile-fps-controls {
+        display: flex !important;
+    }
+}
+
